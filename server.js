@@ -1,5 +1,6 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+const bcrypt = require('bcrypt-nodejs')
 
 const app = express()
 app.use(bodyParser.json()) 
@@ -8,7 +9,7 @@ app.use(bodyParser.json())
 const database = {
     users:[
         {
-            id:'369',
+            id:'123',
             name:'Alazar',
             email:'alazar@gmail.com',
             password:'human',
@@ -17,7 +18,7 @@ const database = {
 
         },
         {
-            id:'123',
+            id:'124',
             name:'Barkon',
             email:'barkon@gmail.com',
             password:'bro123',
@@ -36,15 +37,18 @@ app.get('/',(req,res)=>{
 // Sign in users
 app.post('/signin',(req,res)=>{
     if(req.body.email === database.users[0].email && req.body.password === database.users[0].password){
-        res.json('Successfully logged in')
+        return res.json('Successfully logged in')
     }else{
-        res.status(400).send('Failed while logging...')
+        return res.status(400).send('Failed while logging...')
     }
 })
 
 // Registering users
 app.post('/register',(req,res)=>{
     const {name, email, password} = req.body
+    bcrypt.hash(password,null,null, function(err,hash){
+        console.log(hash)
+    })
     database.users.push({
         id:'125',
         name: name,
@@ -56,6 +60,37 @@ app.post('/register',(req,res)=>{
     res.send(database.users[database.users.length-1])
 })
 
+
+// Profile Route
+app.get('/profile/:id',(req,res)=>{
+    const {id} = req.params
+    let found = false
+    database.users.forEach(user => {
+        if(user.id === id){
+            found = true
+           return  res.json(user)
+        }
+    })
+    if(!found){
+        return res.status(404).json(`User with ${id} id not found!`)
+    }
+})
+
+// Image Route
+app.put('/image', (req,res)=>{
+    const {id} = req.body
+    let found = false
+    database.users.forEach(user =>{
+        if(id === user.id){
+            found = true
+            user.entries++
+            return res.json(user.entries)
+        }
+    })
+    if(!found) return res.status(404).json(`User with ${id} ID not found`)
+})
+
+
 app.listen(3000,()=>{
-    console.log('Server is running on port 3000')
+    console.log('Server is running on port 3000...')
 })
