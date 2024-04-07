@@ -36,6 +36,9 @@ app.get('/',(req,res)=>{
 
 // Sign in users
 app.post('/signin',(req,res)=>{
+    bcrypt.compare('135','$2a$10$cMxFC7lqsx14hcjQ3YO9CeIMZNcCGXJcdCLDaE5.BburjvBH2TPo6',(err,res)=>{
+        console.log('Guess: ', res)
+    })
     if(req.body.email === database.users[0].email && req.body.password === database.users[0].password){
         return res.json('Successfully logged in')
     }else{
