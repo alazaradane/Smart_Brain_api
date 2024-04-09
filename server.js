@@ -42,7 +42,7 @@ app.post('/signin',(req,res)=>{
         console.log('Guess: ', res)
     })
     if(req.body.email === database.users[0].email && req.body.password === database.users[0].password){
-        return res.json('Successfully logged in')
+        return res.json('success')
     }else{
         return res.status(400).send('Failed while logging...')
     }
