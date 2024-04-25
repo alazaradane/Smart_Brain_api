@@ -4,17 +4,16 @@ const bcrypt = require('bcrypt-nodejs')
 const cors = require('cors')
 const knex = require('knex')
 
-const postgres = knex({
+const db = knex({
     client:'pg',
     connection:{
         host:'127.0.0.1',
         user:'postgres',
-        password:'',
+        password:'admin',
         database:'smart_brain'
     }
 })
 
-console.log(postgres.select('*').from('users'))
 
 
 const app = express()
@@ -68,31 +67,36 @@ app.post('/register',(req,res)=>{
     bcrypt.hash(password,null,null, function(err,hash){
         console.log(hash)
     })
-    database.users.push({
-        id:'125',
-        name: name,
-        email: email,
-        password: password,
-        entries:0,
-        joined: new Date(),
+    db('users')
+    .returning('*')
+    .insert({
+        name:name,
+        email:email,
+        joined: new Date()
+    }).then(response =>{
+        res.json(response);
     })
-    res.send(database.users[database.users.length-1])
+    .catch(err => res.status(400).json('Unable to register'));
+   
 })
 
 
 // Profile Route
 app.get('/profile/:id',(req,res)=>{
     const {id} = req.params
-    let found = false
-    database.users.forEach(user => {
-        if(user.id === id){
-            found = true
-           return  res.json(user)
+   
+    db.select('*').from('users').where({id})
+      .then(user =>{
+        if(user.length){
+            res.json(user[0])
+        } else{
+            res.status(400).json('Not found')
         }
     })
-    if(!found){
-        return res.status(404).json(`User with ${id} id not found!`)
-    }
+    .catch(err =>{
+        res.status(400).json('error gettign user')
+    })
+    
 })
 
 // Image Route
