@@ -51,32 +51,51 @@ app.get('/',(req,res)=>{
 
 // Sign in users
 app.post('/signin',(req,res)=>{
-    bcrypt.compare('135','$2a$10$cMxFC7lqsx14hcjQ3YO9CeIMZNcCGXJcdCLDaE5.BburjvBH2TPo6',(err,res)=>{
-        console.log('Guess: ', res)
-    })
-    if(req.body.email === database.users[0].email && req.body.password === database.users[0].password){
-        return res.json(database.users[0])
-    }else{
-        return res.status(400).send('Failed while logging...')
-    }
+    const {email, password} = req.body
+   db.select('email','hash').from('login')
+   .where('email','=',email)
+   .then(data=>{
+        const isvalid = bcrypt.compareSync(password, data[0].hash)
+        if(isvalid){
+           return db.select('*').from('users').where('email','=', email)
+            .then(user =>{
+                res.json(user[0])
+            })
+            .catch(err=> res.json(err.detail))
+        } else{
+           return res.status(400).json('Wrong email or passwords')
+        }
+   })
+   .catch(err=>res.status(400).json(err.detail));
 })
 
 // Registering users
 app.post('/register',(req,res)=>{
     const {name, email, password} = req.body
-    bcrypt.hash(password,null,null, function(err,hash){
-        console.log(hash)
+    const hash = bcrypt.hashSync(password)
+    db.transaction(trx=>{
+        trx.insert({
+            hash:hash,
+            email:email
+        })
+        .into('login')
+        .returning('email')
+        .then(loginEmail=>{
+            return trx('users')
+            .returning('*')
+            .insert({
+                name:name,
+                email:loginEmail[0].email,
+                joined: new Date()
+            })
+            .then(user =>{
+                res.json(user[0])
+            })
+            .then(trx.commit)
+            .catch(trx.rollback)
+        })
+        .catch(err => res.status(400).json('Unable to register'));
     })
-    db('users')
-    .returning('*')
-    .insert({
-        name:name,
-        email:email,
-        joined: new Date()
-    }).then(response =>{
-        res.json(response);
-    })
-    .catch(err => res.status(400).json('Unable to register'));
    
 })
 
@@ -102,15 +121,13 @@ app.get('/profile/:id',(req,res)=>{
 // Image Route
 app.put('/image', (req,res)=>{
     const {id} = req.body
-    let found = false
-    database.users.forEach(user =>{
-        if(id === user.id){
-            found = true
-            user.entries++
-            return res.json(user.entries)
-        }
+    db('users').where('id','=', id)
+    .increment('entries',1)
+    .returning('entries')
+    .then(entries=>{
+        res.json(entries[0]);
     })
-    if(!found) return res.status(404).json(`User with ${id} ID not found`)
+    .catch(err=>res.status(400).json('error getting user'))
 })
 
 
