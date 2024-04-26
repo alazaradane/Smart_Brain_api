@@ -89,7 +89,7 @@ app.post('/register',(req,res)=>{
                 joined: new Date()
             })
             .then(user =>{
-                res.json(user[0])
+                res.json(user)
             })
             .then(trx.commit)
             .catch(trx.rollback)
