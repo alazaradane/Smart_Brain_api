@@ -59,7 +59,7 @@ app.post('/signin',(req,res)=>{
         if(isvalid){
            return db.select('*').from('users').where('email','=', email)
             .then(user =>{
-                res.json(user[0])
+                res.json(user)
             })
             .catch(err=> res.json(err.detail))
         } else{
