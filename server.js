@@ -45,7 +45,9 @@ const database = {
 }
 
 app.get('/',(req,res)=>{
-    res.send(database.users)
+    db('users').select('*').then(data=>{
+        res.json(data)
+    })
 })
 
 
