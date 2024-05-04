@@ -46,6 +46,9 @@ app.get('/profile/:id', profile.handleProfileGet(db))
 // Image Route
 app.put('/image', image.handleImage(db))
 
+// Clarifai Api
+app.post('/imageurl',(req,res)=> {image.handleApiCall(req,res)})
+
 
 app.listen(3000,()=>{
     console.log('Server is running on port 3000...')
